@@ -1,6 +1,6 @@
 {
   "name": "docker-starter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This module allows you to start and stop docker containers from node, using shelljs to pass docker commands to the command line",
   "main": "index.js",
   "scripts": {
