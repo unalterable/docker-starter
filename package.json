@@ -4,7 +4,7 @@
   "description": "This module allows you to start and stop docker containers from node, using shelljs to pass docker commands to the command line",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha ./test/test.js --timeout=60000"
   },
   "repository": {
     "type": "git",
@@ -18,5 +18,8 @@
   "homepage": "https://github.com/unalterable/docker-starter#readme",
   "dependencies": {
     "shelljs": "^0.8.3"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0"
   }
 }

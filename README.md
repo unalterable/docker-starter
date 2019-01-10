@@ -20,14 +20,19 @@ const dockerStarter = require('docker-starter');
 const mongo = dockerStarter({
   container: 'db-test',
   image: 'mongo:4.0.4',
-  extraOptions: '--restart on-failure:5',
+  extraOptions: '--restart on-failure:5', // optional
   containerPort: 27017,
   publishedPort: 27019,
 });
 
-const { host, port, wasAlreadyRunning } = mongo.ensureRunning();
+const work = async () => {
+const { host, port, wasAlreadyRunning } = await mongo.ensureRunning();
 
 // do some stuff requiring mongo
 
-mongo.stopAndRemove();
+await mongo.stopAndRemove();
+}
+
+work();
+
 ```
