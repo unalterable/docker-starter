@@ -28,52 +28,66 @@ describe('', async () => {
     console.info = consoleInfo;
   });
 
-  it('starts and stops', async () => {
-    const mongo = dockerStarter({
-      container: containerName,
-      image: testImage,
-      containerPort: 8080,
-      publishedPort: 8080,
+  describe('Basic usage', () => {
+    let mongo;
+
+    before(() => {
+      mongo = dockerStarter({
+        container: containerName,
+        image: testImage,
+        containerPort: 8080,
+        publishedPort: 8080,
+      });
     });
 
-    const res = await mongo.ensureRunning();
+    it('should start', async () => {
+      const res = await mongo.ensureRunning();
 
-    const dockerOutput = exec(`docker ps | grep ${testImage}`, shellOpts).stdout;
-    assert(dockerOutput.includes(testImage), 'Image was not started as a container')
-    assert(dockerOutput.includes(containerName), 'Image was not started with correct name')
+      const dockerOutput = exec(`docker ps | grep ${testImage}`, shellOpts).stdout;
+      assert(dockerOutput.includes(testImage), 'Image was not started as a container')
+      assert(dockerOutput.includes(containerName), 'Image was not started with correct name')
+    });
 
-    await mongo.stopAndRemove();
+    it('should stop and remove', async () => {
+      await mongo.stopAndRemove();
 
-    assert(exec(`docker ps | grep ${testImage}`, shellOpts).code !== 0,
-      `Container using image '${testImage}' has been left running`)
-    assert(exec(`docker ps | grep ${containerName}`, shellOpts).code !== 0,
-      `Container using container name '${containerName}' has been left running`)
+      assert(exec(`docker ps | grep ${testImage}`, shellOpts).code !== 0,
+        `Container using image '${testImage}' has been left running`)
+      assert(exec(`docker ps | grep ${containerName}`, shellOpts).code !== 0,
+        `Container using container name '${containerName}' has been left running`)
+    });
   })
 
-  it('should fail and tear down if readinessProbe fails', async () => {
-    const mongo = dockerStarter({
-      container: containerName,
-      image: testImage,
-      containerPort: 8080,
-      publishedPort: 8080,
-      readinessProbe: async ({ host, port }) => { throw 'blob' },
-      readinessTimeout: 5,
+  describe('ReadinessProbe', () => {
+    let mongo;
+
+    before(() => {
+      mongo = dockerStarter({
+        container: containerName,
+        image: testImage,
+        containerPort: 8080,
+        publishedPort: 8080,
+        readinessProbe: async ({ host, port }) => { throw 'blob' },
+        readinessTimeout: 5,
+      });
     });
 
-    let errorOccured = false;
-    try {
-      await mongo.ensureRunning();
-    } catch (e) {
-      errorOccured = true;
-      assert(e.message.includes('Readiness probe failed'), 'Error message incorrect')
-      assert(e.message.includes('blob'), 'Error message did not include readinessProbe error')
-    }
-    assert(errorOccured, 'The promise did not reject');
+    it('should fail and automatically tear down', async () => {
+      let errorOccured = false;
+      try {
+        await mongo.ensureRunning();
+      } catch (e) {
+        errorOccured = true;
+        assert(e.message.includes('Readiness probe failed'), 'Error message incorrect')
+        assert(e.message.includes('blob'), 'Error message did not include readinessProbe error')
+      }
+      assert(errorOccured, 'The promise did not reject');
 
-    assert(exec(`docker ps | grep ${testImage}`, shellOpts).code !== 0,
-      `Container using image '${testImage}' has been left running`)
-    assert(exec(`docker ps | grep ${containerName}`, shellOpts).code !== 0,
-      `Container using container name '${containerName}' has been left running`)
+      assert(exec(`docker ps | grep ${testImage}`, shellOpts).code !== 0,
+        `Container using image '${testImage}' has been left running`)
+      assert(exec(`docker ps | grep ${containerName}`, shellOpts).code !== 0,
+        `Container using container name '${containerName}' has been left running`)
+    });
   })
 
   it('should respect the readinessTimeout')
